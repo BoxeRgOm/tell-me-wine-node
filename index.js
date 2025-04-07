@@ -21,13 +21,16 @@ const PORT = process.env.PORT || 3001;
 const app = new Koa();
 const router = new Router();
 
+const cors_origin = process.env.APP_URL || 'http://localhost:3000'
+console.log('cors_origin : ' + cors_origin)
+
 // 또는 특정 origin만 허용 (예: React 개발 서버)
 // app.use(cors({
 //   origin: 'http://localhost:3000',
 //   credentials: true, // 쿠키 전송하려면 true
 // }));
 app.use(cors({
-  origin: process.env.APP_URL || 'http://localhost:3000',
+  origin: cors_origin,
   credentials: true, // 쿠키 전송하려면 true
 }));
 
