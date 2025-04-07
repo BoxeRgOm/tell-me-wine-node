@@ -22,7 +22,6 @@ const app = new Koa();
 const router = new Router();
 
 const cors_origin = process.env.APP_URL || 'http://localhost:3000'
-console.log('cors_origin : ' + cors_origin)
 
 // 또는 특정 origin만 허용 (예: React 개발 서버)
 // app.use(cors({
@@ -46,7 +45,7 @@ const openai = new OpenAI({
 
 // 기본 라우트
 router.get('/', (ctx) => {
-   ctx.body = '🚀 Koa 서버가 잘 작동 중입니다!';
+   ctx.body = 'Server is Running';
 });
 
 router.get('/wineList', async (ctx) => {
@@ -62,8 +61,6 @@ router.post('/add', async (ctx) => {
     
     const wine = ctx.request.body;
 
-    console.log('받은 데이터:', wine);
-
     const { data, error } = await supabase.from('wine')
     .insert([wine])
     .select()
@@ -75,7 +72,6 @@ router.post('/add', async (ctx) => {
         return;
     }
 
-    console.log('받은 데이터:', data);
     ctx.body = { message: 'Save Data!!', received: data };
 
 });
@@ -84,8 +80,6 @@ router.post('/add', async (ctx) => {
 router.post('/feedback', async (ctx) => {
     
     const wine = ctx.request.body;
-
-    console.log('받은 데이터:', wine);
 
     const { data, error } = await supabase.from('wine_feedback')
     .insert([wine])
@@ -98,7 +92,6 @@ router.post('/feedback', async (ctx) => {
         return;
     }
 
-    console.log('받은 데이터:', data);
     ctx.body = { message: 'Save Data!!', received: data };
 
 });
@@ -164,5 +157,5 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 
 app.listen(PORT, () => {
-  console.log(`✅ Koa 서버 실행 중! http://localhost:${PORT}`);
+  console.log('Server is Running!!!');
 });
