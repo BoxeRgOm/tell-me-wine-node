@@ -8,6 +8,7 @@ import bodyParser from 'koa-bodyparser';
 import cors from '@koa/cors';
 
 import { createClient } from '@supabase/supabase-js'
+import axios from 'axios';
 
 dotenv.config();
 
@@ -15,6 +16,8 @@ const supabase_url = process.env.SUPABASE_URL
 const supabase_anon_key = process.env.SUPABASE_ANON_KEY
 const openai_api_key = process.env.OPENAI_API_KEY
 const PORT = process.env.PORT;
+
+const deepseek_api_key = process.env.DEEP_SEEK_API_KEY
 
 const app = new Koa();
 const router = new Router();
@@ -94,37 +97,18 @@ router.post('/feedback', async (ctx) => {
 
 });
 
-router.post('/recommend', async (ctx) => {
+router.post('/openai', async (ctx) => {
 
     try {
-        // let feedbackText = "이전 사용자들의 피드백:\n";
-        // if (feedbackList.length > 0) {
-        //   feedbackList.forEach((fb, index) => {
-        //     feedbackText += `${index + 1}. 평점: ${fb.rating}/5, 의견: ${fb.comment}\n`;
-        //   });
-        // } else {
-        //   feedbackText += "아직 피드백이 없습니다.\n";
-        // }
-    
+
         const {userInput} = ctx.request.body;
         console.log(userInput)
-
-    //    const { data, error } = await supabase
-    //         .from('wine_feedback')
-    //         .select(`
-    //             overall,
-    //             wine (
-    //             name,
-    //             vintage,
-    //             country
-    //         )`);
 
         const { data, error } = await supabase
             .from('wine')
             .select('*');
 
         const winelist = JSON.stringify(data)
-        console.log(winelist)
 
         // OpenAI API 요청
         const response = await openai.chat.completions.create({
@@ -150,7 +134,6 @@ router.post('/recommend', async (ctx) => {
         });
     
         const recommendation = response.choices[0].message.content;
-        console.log(recommendation)
 
         ctx.body = {
             result : recommendation
@@ -164,6 +147,82 @@ router.post('/recommend', async (ctx) => {
 
 });
 
+
+router.post('/deepseek', async (ctx) => {
+
+  try {
+  
+      const {userInput} = ctx.request.body;
+      console.log(userInput)
+
+      const { data, error } = await supabase
+          .from('wine')
+          .select('*');
+
+      const winelist = JSON.stringify(data)
+      console.log(winelist)
+
+      const postData = {
+        "messages": [
+          {
+            role: "system",
+            content: `You are a wine expert.
+            Below is a list of wines the user can choose from. You must recommend only from this list and do not mention any wines that are not included.
+            Please respond in the same language used in the user input.
+            Wine List(JSON):
+            \`\`\`json
+              ${JSON.stringify(data, null, 2)}
+            \`\`\`
+            If the user's question is not related to wine recommendations, feel free to engage in general conversation.
+            `.trim()
+          },
+          {
+            role: "user",
+            content: userInput
+          }
+        ],
+        "model": "deepseek-chat",
+        "frequency_penalty": 0,
+        "max_tokens": 2048,
+        "presence_penalty": 0,
+        "response_format": {
+          "type": "text"
+        },
+        "stop": null,
+        "stream": false,
+        "stream_options": null,
+        "temperature": 1,
+        "top_p": 1,
+        "tools": null,
+        "tool_choice": "none",
+        "logprobs": false,
+        "top_logprobs": null
+      };
+      
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${deepseek_api_key}`
+      };
+      
+      // POST 요청
+        const response = await axios.post('https://api.deepseek.com/chat/completions',
+           postData,
+           {
+            headers: headers
+          });
+
+      ctx.body = {
+          result : response.data.choices[0].message.content
+      }
+
+    } catch (error) {
+
+      console.error('deepseek 실패:', error);
+      ctx.status = 500;
+      ctx.body = { message: '저장 실패', error };
+    }
+
+});
 
 app.use(router.routes());
 app.use(router.allowedMethods());
