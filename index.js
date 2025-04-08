@@ -23,6 +23,7 @@ const app = new Koa();
 const router = new Router();
 
 const cors_origin = process.env.APP_URL
+const backend_url = process.env.BACK_END_URL
 
 // 또는 특정 origin만 허용 (예: React 개발 서버)
 // app.use(cors({
@@ -228,4 +229,15 @@ app.use(router.allowedMethods());
 
 app.listen(PORT, () => {
   console.log('Server is Running!!!');
+
+  setInterval(async () => {
+    try {
+      const renderURL = backend_url;
+      const res = await axios.get(renderURL);
+      console.log(`[PING] ${new Date().toISOString()} - status: ${res.status}`);
+    } catch (err) {
+      console.error("[PING ERROR]", err);
+    }
+  }, 14 * 60 * 1000 + 50 * 1000);
+
 });
