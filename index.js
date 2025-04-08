@@ -11,17 +11,15 @@ import { createClient } from '@supabase/supabase-js'
 
 dotenv.config();
 
-const supabase_url = process.env.SUPABASE_URL || 'https://xiiqnujsbyfaoydmuunn.supabase.co';
-const supabase_anon_key = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhpaXFudWpzYnlmYW95ZG11dW5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5ODY3NTgsImV4cCI6MjA1OTU2Mjc1OH0.ml9lKtuL7VT4sThYdEMwG9STk46xNI9hmSKAsAGudko';
-
-const openai_api_key = process.env.OPENAI_API_KEY || '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';
-
+const supabase_url = process.env.SUPABASE_URL
+const supabase_anon_key = process.env.SUPABASE_ANON_KEY
+const openai_api_key = process.env.OPENAI_API_KEY
 const PORT = process.env.PORT || 3001;
 
 const app = new Koa();
 const router = new Router();
 
-const cors_origin = process.env.APP_URL || 'http://localhost:3000'
+const cors_origin = process.env.APP_URL
 
 // 또는 특정 origin만 허용 (예: React 개발 서버)
 // app.use(cors({
