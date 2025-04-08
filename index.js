@@ -14,7 +14,7 @@ dotenv.config();
 const supabase_url = process.env.SUPABASE_URL
 const supabase_anon_key = process.env.SUPABASE_ANON_KEY
 const openai_api_key = process.env.OPENAI_API_KEY
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 const app = new Koa();
 const router = new Router();
