@@ -41,83 +41,112 @@ app.use(bodyParser());
 const supabase = createClient(supabase_url, supabase_anon_key)
 
 const openai = new OpenAI({
-    apiKey: openai_api_key,
-  });
+  apiKey: openai_api_key,
+});
 
+
+let pingInterval = null;
+
+function startPing() {
+  if (pingInterval) return; // 이미 돌고 있으면 무시
+
+  pingInterval = setInterval(async () => {
+    console.log("Ping sent at", new Date().toISOString());
+    try {
+      const renderURL = backend_url;
+      console.log('renderURL')
+      console.log(renderURL)
+      const res = await axios.get(renderURL);
+      console.log(`[PING] ${new Date().toISOString()} - status: ${res.status}`);
+    } catch (err) {
+      console.error("[PING ERROR]", err);
+    }
+  }, 10 * 60 * 1000 ); // 10분 마다
+}
+
+
+// ping 중단
+function stopPing() {
+  if (pingInterval) {
+    clearInterval(pingInterval);
+    pingInterval = null;
+    console.log("Ping stopped");
+  }
+}
 
 // 기본 라우트
 router.get('/', (ctx) => {
-   ctx.body = 'Server is Running';
+  ctx.body = 'Server is Running';
 });
 
 router.get('/wineList', async (ctx) => {
-    const { data, error } = await supabase.from('wine').select('*')
-    ctx.body = {
-        wineList : data
-    }
-    console.log(data)
+  const { data, error } = await supabase.from('wine').select('*')
+  ctx.body = {
+    wineList: data
+  }
+  console.log(data)
 });
 
 
 router.post('/add', async (ctx) => {
-    
-    const wine = ctx.request.body;
 
-    const { data, error } = await supabase.from('wine')
+  const wine = ctx.request.body;
+
+  const { data, error } = await supabase.from('wine')
     .insert([wine])
     .select()
 
-    if (error) {
-        console.error('Supabase 저장 실패:', error);
-        ctx.status = 500;
-        ctx.body = { message: '저장 실패', error };
-        return;
-    }
+  if (error) {
+    console.error('Supabase 저장 실패:', error);
+    ctx.status = 500;
+    ctx.body = { message: '저장 실패', error };
+    return;
+  }
 
-    ctx.body = { message: 'Save Data!!', received: data };
+  ctx.body = { message: 'Save Data!!', received: data };
 
 });
 
 
 router.post('/feedback', async (ctx) => {
-    
-    const wine = ctx.request.body;
 
-    const { data, error } = await supabase.from('wine_feedback')
+  const wine = ctx.request.body;
+
+  const { data, error } = await supabase.from('wine_feedback')
     .insert([wine])
     .select()
 
-    if (error) {
-        console.error('Supabase 저장 실패:', error);
-        ctx.status = 500;
-        ctx.body = { message: '저장 실패', error };
-        return;
-    }
+  if (error) {
+    console.error('Supabase 저장 실패:', error);
+    ctx.status = 500;
+    ctx.body = { message: '저장 실패', error };
+    return;
+  }
 
-    ctx.body = { message: 'Save Data!!', received: data };
+  ctx.body = { message: 'Save Data!!', received: data };
 
 });
 
 router.post('/openai', async (ctx) => {
 
-    try {
+  try {
 
-        const {userInput} = ctx.request.body;
-        
-        console.log('openai')
-        console.log(userInput)
+    const { userInput } = ctx.request.body;
 
-        const { data, error } = await supabase
-            .from('wine')
-            .select('*');
+    console.log('openai')
+    console.log(userInput)
 
-        // OpenAI API 요청
-        const response = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: `You are a wine expert.
+    const { data, error } = await supabase
+      .from('wine')
+      .select('*');
+
+    // OpenAI API 요청
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are a wine expert.
               Below is a list of wines the user can choose from. You must recommend only from this list and do not mention any wines that are not included.
               Please respond in the same language used in the user input.
               Wine List(JSON):
@@ -126,25 +155,25 @@ router.post('/openai', async (ctx) => {
               \`\`\`
               If the user's question is not related to wine recommendations, feel free to engage in general conversation.
               `.trim()
-            },
-            {
-              role: "user",
-              content: userInput
-            }
-          ],
-        });
-    
-        const recommendation = response.choices[0].message.content;
-
-        ctx.body = {
-            result : recommendation
+        },
+        {
+          role: "user",
+          content: userInput
         }
-      } catch (error) {
+      ],
+    });
 
-        console.error('openai 실패:', error);
-        ctx.status = 500;
-        ctx.body = { message: '저장 실패', error };
-      }
+    const recommendation = response.choices[0].message.content;
+
+    ctx.body = {
+      result: recommendation
+    }
+  } catch (error) {
+
+    console.error('openai 실패:', error);
+    ctx.status = 500;
+    ctx.body = { message: '저장 실패', error };
+  }
 
 });
 
@@ -152,21 +181,21 @@ router.post('/openai', async (ctx) => {
 router.post('/deepseek', async (ctx) => {
 
   try {
-  
-      const {userInput} = ctx.request.body;
 
-      console.log('deepseek')
-      console.log(userInput)
+    const { userInput } = ctx.request.body;
 
-      const { data, error } = await supabase
-          .from('wine')
-          .select('*');
+    console.log('deepseek')
+    console.log(userInput)
 
-      const postData = {
-        "messages": [
-          {
-            role: "system",
-            content: `You are a wine expert.
+    const { data, error } = await supabase
+      .from('wine')
+      .select('*');
+
+    const postData = {
+      "messages": [
+        {
+          role: "system",
+          content: `You are a wine expert.
             Below is a list of wines the user can choose from. You must recommend only from this list and do not mention any wines that are not included.
             Please respond in the same language used in the user input.
             Wine List(JSON):
@@ -175,69 +204,75 @@ router.post('/deepseek', async (ctx) => {
             \`\`\`
             If the user's question is not related to wine recommendations, feel free to engage in general conversation.
             `.trim()
-          },
-          {
-            role: "user",
-            content: userInput
-          }
-        ],
-        "model": "deepseek-chat",
-        "frequency_penalty": 0,
-        "max_tokens": 2048,
-        "presence_penalty": 0,
-        "response_format": {
-          "type": "text"
         },
-        "stop": null,
-        "stream": false,
-        "stream_options": null,
-        "temperature": 1,
-        "top_p": 1,
-        "tools": null,
-        "tool_choice": "none",
-        "logprobs": false,
-        "top_logprobs": null
-      };
-      
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${deepseek_api_key}`
-      };
-      
-      // POST 요청
-        const response = await axios.post('https://api.deepseek.com/chat/completions',
-           postData,
-           {
-            headers: headers
-          });
+        {
+          role: "user",
+          content: userInput
+        }
+      ],
+      "model": "deepseek-chat",
+      "frequency_penalty": 0,
+      "max_tokens": 2048,
+      "presence_penalty": 0,
+      "response_format": {
+        "type": "text"
+      },
+      "stop": null,
+      "stream": false,
+      "stream_options": null,
+      "temperature": 1,
+      "top_p": 1,
+      "tools": null,
+      "tool_choice": "none",
+      "logprobs": false,
+      "top_logprobs": null
+    };
 
-      ctx.body = {
-          result : response.data.choices[0].message.content
-      }
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${deepseek_api_key}`
+    };
 
-    } catch (error) {
+    // POST 요청
+    const response = await axios.post('https://api.deepseek.com/chat/completions',
+      postData,
+      {
+        headers: headers
+      });
 
-      console.error('deepseek 실패:', error);
-      ctx.status = 500;
-      ctx.body = { message: '저장 실패', error };
+    ctx.body = {
+      result: response.data.choices[0].message.content
     }
 
+  } catch (error) {
+
+    console.error('deepseek 실패:', error);
+    ctx.status = 500;
+    ctx.body = { message: '저장 실패', error };
+  }
+
 });
+
+router.post('/awake', async (ctx) => {
+  startPing()
+  ctx.body = {
+    result: 'Success',
+    message: 'Server is Awaked'
+  }
+});
+
+router.post('/sleep', async (ctx) => {
+  stopPing();
+  ctx.body = {
+    result: 'Success',
+    message: 'Server is Slept.'
+  }
+});
+
 
 app.use(router.routes());
 app.use(router.allowedMethods());
 
 app.listen(PORT, () => {
   console.log('Server is Running!!!');
-
-  // setInterval(async () => {
-  //   try {
-  //     const renderURL = backend_url;
-  //     const res = await axios.get(renderURL);
-  //     console.log(`[PING] ${new Date().toISOString()} - status: ${res.status}`);
-  //   } catch (err) {
-  //     console.error("[PING ERROR]", err);
-  //   }
-  // }, 14 * 60 * 1000 + 50 * 1000);
-
 });
