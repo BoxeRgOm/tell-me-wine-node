@@ -102,13 +102,13 @@ router.post('/openai', async (ctx) => {
     try {
 
         const {userInput} = ctx.request.body;
+        
+        console.log('openai')
         console.log(userInput)
 
         const { data, error } = await supabase
             .from('wine')
             .select('*');
-
-        const winelist = JSON.stringify(data)
 
         // OpenAI API 요청
         const response = await openai.chat.completions.create({
@@ -153,14 +153,13 @@ router.post('/deepseek', async (ctx) => {
   try {
   
       const {userInput} = ctx.request.body;
+
+      console.log('deepseek')
       console.log(userInput)
 
       const { data, error } = await supabase
           .from('wine')
           .select('*');
-
-      const winelist = JSON.stringify(data)
-      console.log(winelist)
 
       const postData = {
         "messages": [
