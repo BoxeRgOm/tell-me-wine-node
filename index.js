@@ -11,10 +11,10 @@ import { createClient } from '@supabase/supabase-js'
 
 dotenv.config();
 
-const supabase_url = process.env.SUPABASE_URL
-const supabase_anon_key = process.env.SUPABASE_ANON_KEY
+const supabase_url = process.env.SUPABASE_URL || 'https://xiiqnujsbyfaoydmuunn.supabase.co';
+const supabase_anon_key = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhpaXFudWpzYnlmYW95ZG11dW5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5ODY3NTgsImV4cCI6MjA1OTU2Mjc1OH0.ml9lKtuL7VT4sThYdEMwG9STk46xNI9hmSKAsAGudko';
 
-const openai_api_key = process.env.OPENAI_API_KEY
+const openai_api_key = process.env.OPENAI_API_KEY || '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';
 
 const PORT = process.env.PORT || 3001;
 
@@ -132,8 +132,22 @@ router.post('/recommend', async (ctx) => {
         const response = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
-            { role: "system", content: "당신은 와인 전문가입니다." },
-            { role: "user", content: `${userInput}. ${winelist}에 있는 와인 중에서 추천 가능할까?` }
+            {
+              role: "system",
+              content: `You are a wine expert.
+              Below is a list of wines the user can choose from. You must recommend only from this list and do not mention any wines that are not included.
+              Please respond in the same language used in the user input.
+              Wine List(JSON):
+              \`\`\`json
+                ${JSON.stringify(data, null, 2)}
+              \`\`\`
+              If the user's question is not related to wine recommendations, feel free to engage in general conversation.
+              `.trim()
+            },
+            {
+              role: "user",
+              content: userInput
+            }
           ],
         });
     
