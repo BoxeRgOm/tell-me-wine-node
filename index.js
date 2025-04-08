@@ -230,14 +230,14 @@ app.use(router.allowedMethods());
 app.listen(PORT, () => {
   console.log('Server is Running!!!');
 
-  setInterval(async () => {
-    try {
-      const renderURL = backend_url;
-      const res = await axios.get(renderURL);
-      console.log(`[PING] ${new Date().toISOString()} - status: ${res.status}`);
-    } catch (err) {
-      console.error("[PING ERROR]", err);
-    }
-  }, 14 * 60 * 1000 + 50 * 1000);
+  // setInterval(async () => {
+  //   try {
+  //     const renderURL = backend_url;
+  //     const res = await axios.get(renderURL);
+  //     console.log(`[PING] ${new Date().toISOString()} - status: ${res.status}`);
+  //   } catch (err) {
+  //     console.error("[PING ERROR]", err);
+  //   }
+  // }, 14 * 60 * 1000 + 50 * 1000);
 
 });
