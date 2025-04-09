@@ -77,7 +77,7 @@ function startPing() {
     } catch (err) {
       console.error("[PING ERROR]", err);
     }
-  }, 10 * 1000 ); // 10분 마다
+  }, 10 * 60 * 1000 ); // 10분 마다
 }
 
 
