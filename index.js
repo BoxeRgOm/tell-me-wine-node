@@ -166,9 +166,6 @@ router.post('/openai', async (ctx) => {
   
     messages.unshift(systemMessage(json));
 
-    console.log('openai')
-    console.log(messages)
-
     // OpenAI API 요청
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -194,35 +191,13 @@ router.post('/deepseek', async (ctx) => {
 
   try {
 
-    const { userInput } = ctx.request.body;
-
-    console.log('deepseek')
-    console.log(userInput)
-
-    // const { data, error } = await supabase
-    //   .from('wine')
-    //   .select('*');
+    const { messages } = ctx.request.body;
     const json = JSON.stringify(wineList, null, 2)
 
+    messages.unshift(systemMessage(json));
+
     const postData = {
-      "messages": [
-        {
-          role: "system",
-          content: `You are a wine expert.
-            Below is a list of wines the user can choose from. You must recommend only from this list and do not mention any wines that are not included.
-            Please respond in the same language used in the user input.
-            Wine List(JSON):
-            \`\`\`json
-              ${json}
-            \`\`\`
-            If the user's question is not related to wine recommendations, feel free to engage in general conversation.
-            `.trim()
-        },
-        {
-          role: "user",
-          content: userInput
-        }
-      ],
+      "messages": messages,
       "model": "deepseek-chat",
       "frequency_penalty": 0,
       "max_tokens": 2048,
