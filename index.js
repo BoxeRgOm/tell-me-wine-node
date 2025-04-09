@@ -45,6 +45,21 @@ const openai = new OpenAI({
 });
 
 
+
+ // 와인리싀트 관련
+let wineList = []
+
+const getWineList = async () => {
+  const { data, error } = await supabase.from('wine').select('*')
+  wineList = data;
+  if (error){
+    console.log(error)
+  }else{
+    wineList = data;
+  }
+}
+
+ // 핑 관련
 let pingInterval = null;
 
 function startPing() {
@@ -53,15 +68,16 @@ function startPing() {
   pingInterval = setInterval(async () => {
     console.log("Ping sent at", new Date().toISOString());
     try {
-      const renderURL = backend_url;
-      console.log('renderURL')
-      console.log(renderURL)
-      const res = await axios.get(renderURL);
-      console.log(`[PING] ${new Date().toISOString()} - status: ${res.status}`);
+      // const renderURL = backend_url;
+      // console.log('renderURL')
+      // console.log(renderURL)
+      // const res = await axios.get(renderURL);
+      // console.log(`[PING] ${new Date().toISOString()} - status: ${res.status}`);
+      await getWineList();
     } catch (err) {
       console.error("[PING ERROR]", err);
     }
-  }, 10 * 60 * 1000 ); // 10분 마다
+  }, 10 * 1000 ); // 10분 마다
 }
 
 
@@ -74,17 +90,16 @@ function stopPing() {
   }
 }
 
+
 // 기본 라우트
 router.get('/', (ctx) => {
   ctx.body = 'Server is Running';
 });
 
 router.get('/wineList', async (ctx) => {
-  const { data, error } = await supabase.from('wine').select('*')
   ctx.body = {
-    wineList: data
+    wineList: wineList
   }
-  console.log(data)
 });
 
 
@@ -127,40 +142,37 @@ router.post('/feedback', async (ctx) => {
 
 });
 
+const systemMessage = (json) => {
+  return {
+    role: "system",
+    content: `You are a wine expert.
+        Below is a list of wines the user can choose from. You must recommend only from this list and do not mention any wines that are not included.
+        Please respond in the same language used in the user input.
+        Wine List(JSON):
+        \`\`\`json
+          ${json}
+        \`\`\`
+        If the user's question is not related to wine recommendations, feel free to engage in general conversation.
+        `.trim()
+  }
+}
+
 router.post('/openai', async (ctx) => {
 
   try {
 
-    const { userInput } = ctx.request.body;
+    const { messages } = ctx.request.body;
+    const json = JSON.stringify(wineList, null, 2)
+  
+    messages.unshift(systemMessage(json));
 
     console.log('openai')
-    console.log(userInput)
-
-    const { data, error } = await supabase
-      .from('wine')
-      .select('*');
+    console.log(messages)
 
     // OpenAI API 요청
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `You are a wine expert.
-              Below is a list of wines the user can choose from. You must recommend only from this list and do not mention any wines that are not included.
-              Please respond in the same language used in the user input.
-              Wine List(JSON):
-              \`\`\`json
-                ${JSON.stringify(data, null, 2)}
-              \`\`\`
-              If the user's question is not related to wine recommendations, feel free to engage in general conversation.
-              `.trim()
-        },
-        {
-          role: "user",
-          content: userInput
-        }
-      ],
+      messages: messages
     });
 
     const recommendation = response.choices[0].message.content;
@@ -187,9 +199,10 @@ router.post('/deepseek', async (ctx) => {
     console.log('deepseek')
     console.log(userInput)
 
-    const { data, error } = await supabase
-      .from('wine')
-      .select('*');
+    // const { data, error } = await supabase
+    //   .from('wine')
+    //   .select('*');
+    const json = JSON.stringify(wineList, null, 2)
 
     const postData = {
       "messages": [
@@ -200,7 +213,7 @@ router.post('/deepseek', async (ctx) => {
             Please respond in the same language used in the user input.
             Wine List(JSON):
             \`\`\`json
-              ${JSON.stringify(data, null, 2)}
+              ${json}
             \`\`\`
             If the user's question is not related to wine recommendations, feel free to engage in general conversation.
             `.trim()
@@ -269,6 +282,7 @@ router.post('/sleep', async (ctx) => {
   }
 });
 
+getWineList();
 
 app.use(router.routes());
 app.use(router.allowedMethods());
